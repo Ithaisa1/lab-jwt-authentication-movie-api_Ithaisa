@@ -1,9 +1,7 @@
 const { Router } = require('express')
 const router = Router()
-
 const verificarToken = require('../middleware/verificarToken')
 const verificarRol = require('../middleware/verificarRol')
-
 const {
   listarPeliculas,
   obtenerPelicula,
@@ -14,16 +12,16 @@ const {
   crearResena
 } = require('../controllers/peliculasController')
 
-// públicas
+// Rutas públicas
 router.get('/', listarPeliculas)
 router.get('/:id', obtenerPelicula)
 router.get('/:id/resenas', listarResenas)
 
-// protegidas
+// Rutas protegidas: cualquier usuario autenticado
 router.post('/', verificarToken, crearPelicula)
 router.post('/:id/resenas', verificarToken, crearResena)
 
-// solo admin
+// Rutas protegidas: solo admin
 router.put('/:id', verificarToken, verificarRol('admin'), actualizarPelicula)
 router.delete('/:id', verificarToken, verificarRol('admin'), eliminarPelicula)
 

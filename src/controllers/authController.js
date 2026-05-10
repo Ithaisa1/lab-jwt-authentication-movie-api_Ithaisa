@@ -17,12 +17,10 @@ const generarToken = (usuario) => {
   )
 }
 
-// REGISTRO
+// POST /api/auth/registro
 const registro = async (req, res, next) => {
   try {
     const { nombre, email, password, rol } = req.body
-
-    console.log('Datos recibidos:', { nombre, email, rol })
 
     if (!nombre || !email || !password) {
       throw new AppError('nombre, email y password son obligatorios', 400)
@@ -32,22 +30,17 @@ const registro = async (req, res, next) => {
       throw new AppError('La contraseña debe tener al menos 6 caracteres', 400)
     }
 
-    console.log('Verificando si email existe...')
-    const existe = await pool.query(
-      'SELECT id FROM usuarios WHERE email = $1',
-      [email]
-    )
-
+    // Comprobar si el email ya existe
+    const existe = await pool.query('SELECT id FROM usuarios WHERE email = $1', [email])
     if (existe.rows.length > 0) {
       throw new AppError('Ya existe un usuario con ese email', 409)
     }
 
-    console.log('Hasheando password...')
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS)
 
+    // Solo permitir crear admins si se especifica el rol (en producción esto estaría más restringido)
     const rolFinal = rol === 'admin' ? 'admin' : 'usuario'
 
-    console.log('Insertando usuario...')
     const { rows } = await pool.query(
       `INSERT INTO usuarios (nombre, email, password_hash, rol)
        VALUES ($1, $2, $3, $4)
@@ -58,16 +51,14 @@ const registro = async (req, res, next) => {
     const usuario = rows[0]
     const token = generarToken(usuario)
 
-    console.log('Usuario creado exitosamente')
     res.status(201).json({ token, usuario })
 
   } catch (err) {
-    console.error('Error en registro:', err)
     next(err)
   }
 }
 
-// LOGIN
+// POST /api/auth/login
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body
@@ -86,11 +77,7 @@ const login = async (req, res, next) => {
     }
 
     const usuario = rows[0]
-
-    const passwordValida = await bcrypt.compare(
-      password,
-      usuario.password_hash
-    )
+    const passwordValida = await bcrypt.compare(password, usuario.password_hash)
 
     if (!passwordValida) {
       throw new AppError('Credenciales incorrectas', 401)
@@ -113,7 +100,7 @@ const login = async (req, res, next) => {
   }
 }
 
-// PERFIL
+// GET /api/auth/perfil
 const perfil = async (req, res, next) => {
   try {
     const { rows } = await pool.query(
@@ -126,7 +113,6 @@ const perfil = async (req, res, next) => {
     }
 
     res.json(rows[0])
-
   } catch (err) {
     next(err)
   }

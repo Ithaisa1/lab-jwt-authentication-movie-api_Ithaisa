@@ -1,19 +1,13 @@
 {
-  "dependencies": {
-    "bcrypt": "^6.0.0",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3",
-    "pg": "^8.20.0"
-  },
-  "scripts": {
-    "dev": "nodemon index.js",
-    "start": "node index.js"
-  },
   "name": "lab-jwt-authentication-movie-api_ithaisa",
   "version": "1.0.0",
   "description": "![logo_ironhack_blue 7](https://user-images.githubusercontent.com/23629340/40541063-a07a0a8a-601a-11e8-91b5-2f13e4e6b441.png)",
   "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Ithaisa1/lab-jwt-authentication-movie-api_Ithaisa.git"
@@ -25,5 +19,16 @@
   "bugs": {
     "url": "https://github.com/Ithaisa1/lab-jwt-authentication-movie-api_Ithaisa/issues"
   },
-  "homepage": "https://github.com/Ithaisa1/lab-jwt-authentication-movie-api_Ithaisa#readme"
+  "homepage": "https://github.com/Ithaisa1/lab-jwt-authentication-movie-api_Ithaisa#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
 }

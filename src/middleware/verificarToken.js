@@ -15,7 +15,10 @@ const verificarToken = (req, res, next) => {
     req.usuario = payload
     next()
   } catch (err) {
-    return next(new AppError('Token inválido o expirado', 401))
+    if (err.name === 'TokenExpiredError') {
+      return next(new AppError('Token expirado', 401))
+    }
+    return next(new AppError('Token inválido', 401))
   }
 }
 

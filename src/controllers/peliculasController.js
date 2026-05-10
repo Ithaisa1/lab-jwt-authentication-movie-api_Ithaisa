@@ -1,147 +1,127 @@
 const pool = require('../config/db')
 const AppError = require('../utils/AppError')
 
-// LISTAR PELÍCULAS (PÚBLICO)
+// GET /api/peliculas
 const listarPeliculas = async (req, res, next) => {
   try {
-    const { rows } = await pool.query(
-      'SELECT * FROM peliculas ORDER BY created_at DESC'
-    )
+    const { rows } = await pool.query('SELECT * FROM peliculas ORDER BY id')
     res.json(rows)
   } catch (err) {
     next(err)
   }
 }
 
-// OBTENER PELÍCULA POR ID (PÚBLICO)
+// GET /api/peliculas/:id
 const obtenerPelicula = async (req, res, next) => {
   try {
-    const { id } = req.params
-
-    const { rows } = await pool.query(
-      'SELECT * FROM peliculas WHERE id = $1',
-      [id]
-    )
-
+    const { rows } = await pool.query('SELECT * FROM peliculas WHERE id = $1', [req.params.id])
+    
     if (rows.length === 0) {
       throw new AppError('Película no encontrada', 404)
     }
-
+    
     res.json(rows[0])
   } catch (err) {
     next(err)
   }
 }
 
-// CREAR PELÍCULA (USUARIO AUTENTICADO)
+// POST /api/peliculas
 const crearPelicula = async (req, res, next) => {
   try {
-    const { titulo, anio, genero, director, sinopsis, poster_url } = req.body
-
+    const { titulo, anio, nota, director, genero } = req.body
+    
     if (!titulo || !anio) {
       throw new AppError('titulo y anio son obligatorios', 400)
     }
 
     const { rows } = await pool.query(
-      `INSERT INTO peliculas (titulo, anio, genero, director, sinopsis, poster_url)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO peliculas (titulo, anio, nota, director, genero)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [titulo, anio, genero, director, sinopsis, poster_url]
+      [titulo, anio, nota, director, genero]
     )
-
+    
     res.status(201).json(rows[0])
   } catch (err) {
     next(err)
   }
 }
 
-// ACTUALIZAR PELÍCULA (SOLO ADMIN)
+// PUT /api/peliculas/:id
 const actualizarPelicula = async (req, res, next) => {
   try {
-    const { id } = req.params
-    const { titulo, anio, genero, director, sinopsis, poster_url } = req.body
-
+    const { titulo, anio, nota, director, genero } = req.body
+    
     const { rows } = await pool.query(
       `UPDATE peliculas
        SET titulo = COALESCE($1, titulo),
            anio = COALESCE($2, anio),
-           genero = COALESCE($3, genero),
+           nota = COALESCE($3, nota),
            director = COALESCE($4, director),
-           sinopsis = COALESCE($5, sinopsis),
-           poster_url = COALESCE($6, poster_url)
-       WHERE id = $7
+           genero = COALESCE($5, genero)
+       WHERE id = $6
        RETURNING *`,
-      [titulo, anio, genero, director, sinopsis, poster_url, id]
+      [titulo, anio, nota, director, genero, req.params.id]
     )
-
+    
     if (rows.length === 0) {
       throw new AppError('Película no encontrada', 404)
     }
-
+    
     res.json(rows[0])
   } catch (err) {
     next(err)
   }
 }
 
-// ELIMINAR PELÍCULA (SOLO ADMIN)
+// DELETE /api/peliculas/:id
 const eliminarPelicula = async (req, res, next) => {
   try {
-    const { id } = req.params
-
     const { rows } = await pool.query(
       'DELETE FROM peliculas WHERE id = $1 RETURNING *',
-      [id]
+      [req.params.id]
     )
-
+    
     if (rows.length === 0) {
       throw new AppError('Película no encontrada', 404)
     }
-
-    res.json({ mensaje: 'Película eliminada correctamente' })
+    
+    res.status(204).send()
   } catch (err) {
     next(err)
   }
 }
 
-// LISTAR RESEÑAS DE UNA PELÍCULA (PÚBLICO)
+// GET /api/peliculas/:id/resenas
 const listarResenas = async (req, res, next) => {
   try {
-    const { id } = req.params
-
     const { rows } = await pool.query(
-      `SELECT r.*, u.nombre as usuario_nombre
-       FROM resenas r
-       JOIN usuarios u ON r.usuario_id = u.id
-       WHERE r.pelicula_id = $1
-       ORDER BY r.created_at DESC`,
-      [id]
+      'SELECT * FROM resenas WHERE pelicula_id = $1',
+      [req.params.id]
     )
-
     res.json(rows)
   } catch (err) {
     next(err)
   }
 }
 
-// CREAR RESEÑA (USUARIO AUTENTICADO)
+// POST /api/peliculas/:id/resenas
 const crearResena = async (req, res, next) => {
   try {
-    const { id } = req.params
-    const { calificacion, comentario } = req.body
-    const usuario_id = req.usuario.id
-
-    if (!calificacion || calificacion < 1 || calificacion > 5) {
-      throw new AppError('La calificación debe estar entre 1 y 5', 400)
+    const { comentario, puntuacion } = req.body
+    
+    if (!comentario || !puntuacion) {
+      throw new AppError('comentario y puntuacion son obligatorios', 400)
     }
 
     const { rows } = await pool.query(
-      `INSERT INTO resenas (pelicula_id, usuario_id, calificacion, comentario)
+      `INSERT INTO resenas (pelicula_id, usuario_id, comentario, puntuacion)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [id, usuario_id, calificacion, comentario]
+      [req.params.id, req.usuario.id, comentario, puntuacion]
     )
-
+    
     res.status(201).json(rows[0])
   } catch (err) {
     next(err)
